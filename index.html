@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Reservas</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f8fc;
+            color: #333;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .tab:hover {
+            background-color: #f1f1f1;
+        }
+        .tab.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .content {
+            display: none;
+            padding: 20px;
+        }
+        .content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #4CAF50;
+        }
+        .reservas-list {
+            margin-top: 20px;
+        }
+        .reserva-item {
+            background-color: white;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .actions button {
+            margin-right: 5px;
+            padding: 8px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .actions button:hover {
+            background-color: #45a049;
+        }
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        #modal .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 300px;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            color: #aaaaaa;
+        }
+        #printButton {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #printButton:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Sistema de Reservas</h1>
+    </header>
+
+    <div class="tabs">
+        <div class="tab active" data-target="tab1">Agregar Reserva</div>
+        <div class="tab" data-target="tab2">Ver Reservas</div>
+    </div>
+
+    <div class="content active" id="tab1">
+        <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" required>
+        </div>
+        <div class="form-group">
+            <label for="telefono">Teléfono</label>
+            <input type="tel" id="telefono" required>
+        </div>
+        <div class="form-group">
+            <label for="estado">Estado de Pago</label>
+            <select id="estado">
+                <option value="pagado">Pagado</option>
+                <option value="reservado">Reservado</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="precio">Precio por Persona</label>
+            <input type="number" id="precio" readonly>
+            <button onclick="editarPrecio()">Editar</button>
+        </div>
+        <div class="form-group">
+            <label for="destino">Destino</label>
+            <input type="text" id="destino" readonly>
+            <button onclick="editarDestino()">Editar</button>
+        </div>
+        <div class="form-group">
+            <label for="fecha">Fecha del Viaje</label>
+            <input type="date" id="fecha">
+        </div>
+        <div class="form-group">
+            <label for="numPersonas">Número de Personas</label>
+            <input type="number" id="numPersonas" min="1" value="1">
+        </div>
+        <button onclick="agregarReserva()">Agregar Reserva</button>
+        <button onclick="eliminarTodasReservas()">Eliminar Todas las Reservas</button>
+    </div>
+
+    <div class="content" id="tab2">
+        <div class="reservas-list" id="reservasList">
+            <!-- Aquí se mostrarán las reservas -->
+        </div>
+        <button id="printButton" onclick="imprimirReservas()">Imprimir Reservas</button>
+    </div>
+
+    <div id="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <h2>Editar Reserva</h2>
+            <div class="form-group">
+                <label for="editNombre">Nombre</label>
+                <input type="text" id="editNombre">
+            </div>
+            <div class="form-group">
+                <label for="editTelefono">Teléfono</label>
+                <input type="tel" id="editTelefono">
+            </div>
+            <div class="form-group">
+                <label for="editEstado">Estado de Pago</label>
+                <select id="editEstado">
+                    <option value="pagado">Pagado</option>
+                    <option value="reservado">Reservado</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="editFecha">Fecha del Viaje</label>
+                <input type="date" id="editFecha">
+            </div>
+            <div class="form-group">
+                <label for="editNumPersonas">Número de Personas</label>
+                <input type="number" id="editNumPersonas" min="1">
+            </div>
+            <button onclick="guardarCambios()">Guardar Cambios</button>
+            <button onclick="confirmarEliminarReserva()">Eliminar Reserva</button>
+        </div>
+    </div>
+
+    <script>
+        // Cargar información del localStorage
+        let reservas = JSON.parse(localStorage.getItem('reservas')) || [];
+        let precioPorPersona = localStorage.getItem('precioPorPersona') || 100;
+        let destinoFijo = localStorage.getItem('destinoFijo') || 'Destino Fijo';
+        let reservaIndex = null;
+
+        document.getElementById('precio').value = precioPorPersona;
+        document.getElementById('destino').value = destinoFijo;
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+                
+                this.classList.add('active');
+                document.getElementById(this.getAttribute('data-target')).classList.add('active');
+            });
+        });
+
+        function actualizarReservasList() {
+            const reservasList = document.getElementById('reservasList');
+            reservasList.innerHTML = '';
+            reservas.forEach((reserva, index) => {
+                const subtotal = reserva.precio * reserva.numPersonas;
+                const mensaje = `Detalles del Ticket:\nNombre: ${reserva.nombre}\nTeléfono: ${reserva.telefono}\nEstado: ${reserva.estado}\nPrecio: ${reserva.precio}\nDestino: ${reserva.destino}\nFecha: ${reserva.fecha}\nPersonas: ${reserva.numPersonas}\nSubtotal: ${subtotal}`;
+                
+                const div = document.createElement('div');
+                div.className = 'reserva-item';
+                div.innerHTML = `
+                    <p>Nombre: ${reserva.nombre}</p>
+                    <p>Teléfono: ${reserva.telefono}</p>
+                    <p>Estado: ${reserva.estado}</p>
+                    <p>Precio: ${reserva.precio} por persona</p>
+                    <p>Destino: ${reserva.destino}</p>
+                    <p>Fecha: ${reserva.fecha}</p>
+                    <p>Personas: ${reserva.numPersonas}</p>
+                    <p><strong>Subtotal: ${subtotal}</strong></p>
+                    <div class="actions">
+                        <button onclick="verTicket(${index})">Ver Ticket</button>
+                        <button onclick="editarReserva(${index})">Editar</button>
+                        <button onclick="confirmarEliminarReserva(${index})">Eliminar</button>
+                        <button onclick="enviarPorWhatsapp('${encodeURIComponent(mensaje)}')">Enviar por WhatsApp</button>
+                    </div>
+                `;
+                reservasList.appendChild(div);
+            });
+        }
+
+        function agregarReserva() {
+            const nombre = document.getElementById('nombre').value;
+            const telefono = document.getElementById('telefono').value;
+            const estado = document.getElementById('estado').value;
+            const precio = parseFloat(document.getElementById('precio').value);
+            const destino = document.getElementById('destino').value;
+            const fecha = document.getElementById('fecha').value;
+            const numPersonas = parseInt(document.getElementById('numPersonas').value);
+
+            const reserva = { nombre, telefono, estado, precio, destino, fecha, numPersonas };
+            reservas.push(reserva);
+            localStorage.setItem('reservas', JSON.stringify(reservas));
+            actualizarReservasList();
+            alert('Reserva agregada!');
+            
+            // Limpiar campos después de agregar la reserva
+            document.getElementById('nombre').value = '';
+            document.getElementById('telefono').value = '';
+            document.getElementById('estado').value = 'pagado';
+            document.getElementById('fecha').value = '';
+            document.getElementById('numPersonas').value = '1';
+        }
+
+        function editarPrecio() {
+            const password = prompt("Ingrese la contraseña para editar el precio:");
+            if (password === "12345") {
+                const nuevoPrecio = prompt("Ingrese el nuevo precio:");
+                if (nuevoPrecio) {
+                    document.getElementById('precio').value = nuevoPrecio;
+                    localStorage.setItem('precioPorPersona', nuevoPrecio);
+                    alert('Precio actualizado!');
+                }
+            } else {
+                alert('Contraseña incorrecta');
+            }
+        }
+
+        function editarDestino() {
+            const password = prompt("Ingrese la contraseña para editar el destino:");
+            if (password === "12345") {
+                const nuevoDestino = prompt("Ingrese el nuevo destino:");
+                if (nuevoDestino) {
+                    document.getElementById('destino').value = nuevoDestino;
+                    localStorage.setItem('destinoFijo', nuevoDestino);
+                    alert('Destino actualizado!');
+                }
+            } else {
+                alert('Contraseña incorrecta');
+            }
+        }
+
+        function verTicket(index) {
+            const reserva = reservas[index];
+            const mensaje = `Detalles del Ticket:\nNombre: ${reserva.nombre}\nTeléfono: ${reserva.telefono}\nEstado: ${reserva.estado}\nPrecio: ${reserva.precio}\nDestino: ${reserva.destino}\nFecha: ${reserva.fecha}\nPersonas: ${reserva.numPersonas}\nSubtotal: ${reserva.precio * reserva.numPersonas}`;
+            alert(mensaje);
+        }
+
+        function enviarPorWhatsapp(mensaje) {
+            const urlWhatsapp = `https://wa.me/?text=${mensaje}`;
+            window.open(urlWhatsapp, '_blank');
+        }
+
+        function editarReserva(index) {
+            reservaIndex = index;
+            const reserva = reservas[index];
+            document.getElementById('editNombre').value = reserva.nombre;
+            document.getElementById('editTelefono').value = reserva.telefono;
+            document.getElementById('editEstado').value = reserva.estado;
+            document.getElementById('editFecha').value = reserva.fecha;
+            document.getElementById('editNumPersonas').value = reserva.numPersonas;
+            const modal = document.getElementById('modal');
+            modal.style.display = 'flex';
+        }
+
+        function cerrarModal() {
+            const modal = document.getElementById('modal');
+            modal.style.display = 'none';
+        }
+
+        function guardarCambios() {
+            const reserva = reservas[reservaIndex];
+            reserva.nombre = document.getElementById('editNombre').value;
+            reserva.telefono = document.getElementById('editTelefono').value;
+            reserva.estado = document.getElementById('editEstado').value;
+            reserva.fecha = document.getElementById('editFecha').value;
+            reserva.numPersonas = document.getElementById('editNumPersonas').value;
+            localStorage.setItem('reservas', JSON.stringify(reservas));
+            actualizarReservasList();
+            alert('Cambios guardados!');
+            cerrarModal();
+        }
+
+        function confirmarEliminarReserva(index) {
+            if (confirm('¿Está seguro de que desea eliminar esta reserva?')) {
+                eliminarReserva(index);
+            }
+        }
+
+        function eliminarReserva(index) {
+            reservas.splice(index, 1);
+            localStorage.setItem('reservas', JSON.stringify(reservas));
+            actualizarReservasList();
+            alert('Reserva eliminada!');
+        }
+
+        function eliminarTodasReservas() {
+            if (confirm('¿Está seguro de que desea eliminar todas las reservas?')) {
+                reservas = [];
+                localStorage.setItem('reservas', JSON.stringify(reservas));
+                actualizarReservasList();
+                alert('Todas las reservas han sido eliminadas!');
+            }
+        }
+
+        function imprimirReservas() {
+            let printContent = `
+                <h1>Lista de Reservas</h1>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Teléfono</th>
+                            <th>Estado</th>
+                            <th>Precio</th>
+                            <th>Destino</th>
+                            <th>Fecha</th>
+                            <th>Personas</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            reservas.forEach(reserva => {
+                const subtotal = reserva.precio * reserva.numPersonas;
+                printContent += `
+                    <tr>
+                        <td>${reserva.nombre}</td>
+                        <td>${reserva.telefono}</td>
+                        <td>${reserva.estado}</td>
+                        <td>${reserva.precio}</td>
+                        <td>${reserva.destino}</td>
+                        <td>${reserva.fecha}</td>
+                        <td>${reserva.numPersonas}</td>
+                        <td>${subtotal}</td>
+                    </tr>
+                `;
+            });
+
+            printContent += `
+                    </tbody>
+                </table>
+            `;
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`<html><head><title>Imprimir Reservas</title></head><body>${printContent}</body></html>`);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        window.onload = actualizarReservasList;
+    </script>
+</body>
+</html>
