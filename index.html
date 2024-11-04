@@ -151,6 +151,7 @@
 <body>
     <header>
         <h1>Sistema de Reservas</h1>
+        <div id="totalPersonas" style="font-size: 1.2em; margin-top: 10px;">Total de Personas: 0</div>
     </header>
 
     <div class="tabs">
@@ -258,8 +259,12 @@
         function actualizarReservasList() {
             const reservasList = document.getElementById('reservasList');
             reservasList.innerHTML = '';
+            let totalPersonas = 0;
+
             reservas.forEach((reserva, index) => {
                 const subtotal = reserva.precio * reserva.numPersonas;
+                totalPersonas += reserva.numPersonas; // Sumar el número de personas
+
                 const mensaje = `Detalles del Ticket:\nNombre: ${reserva.nombre}\nTeléfono: ${reserva.telefono}\nEstado: ${reserva.estado}\nPrecio: ${reserva.precio}\nDestino: ${reserva.destino}\nFecha: ${reserva.fecha}\nPersonas: ${reserva.numPersonas}\nSubtotal: ${subtotal}`;
                 
                 const div = document.createElement('div');
@@ -282,6 +287,9 @@
                 `;
                 reservasList.appendChild(div);
             });
+
+            // Actualizar el elemento del total de personas
+            document.getElementById('totalPersonas').textContent = `Total de Personas: ${totalPersonas}`;
         }
 
         function agregarReserva() {
