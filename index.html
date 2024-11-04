@@ -307,7 +307,7 @@
             const fecha = document.getElementById('fecha').value;
             const numPersonas = parseInt(document.getElementById('numPersonas').value);
 
-            const reserva = { nombre, telefono, estado, precio, destino, fecha };
+            const reserva = { nombre, telefono, estado, precio, destino, fecha, numPersonas };
             reservas.push(reserva);
             localStorage.setItem('reservas', JSON.stringify(reservas));
             actualizarReservasList();
@@ -318,7 +318,7 @@
             document.getElementById('telefono').value = '';
             document.getElementById('estado').value = 'pagado';
             document.getElementById('fecha').value = '';
-            document.getElementById('numPersonas').value = '1';
+            document.getElementById('numPersonas').value = '1'; // Restablece a 1
         }
 
         function editarPrecio() {
@@ -384,7 +384,7 @@
             reserva.telefono = document.getElementById('editTelefono').value;
             reserva.estado = document.getElementById('editEstado').value;
             reserva.fecha = document.getElementById('editFecha').value;
-            reserva.numPersonas = document.getElementById('editNumPersonas').value;
+            reserva.numPersonas = parseInt(document.getElementById('editNumPersonas').value);
             localStorage.setItem('reservas', JSON.stringify(reservas));
             actualizarReservasList();
             alert('Cambios guardados!');
