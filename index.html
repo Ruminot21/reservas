@@ -256,6 +256,11 @@
             });
         });
 
+        function formatearFecha(fecha) {
+            const [year, month, day] = fecha.split('-');
+            return `${day}-${month}-${year}`;
+        }
+
         function actualizarReservasList() {
             const reservasList = document.getElementById('reservasList');
             reservasList.innerHTML = '';
@@ -264,8 +269,9 @@
             reservas.forEach((reserva, index) => {
                 const subtotal = reserva.precio * reserva.numPersonas;
                 totalPersonas += reserva.numPersonas; // Sumar el número de personas
+                const fechaFormateada = formatearFecha(reserva.fecha);
 
-                const mensaje = `Detalles del Ticket:\nNombre: ${reserva.nombre}\nTeléfono: ${reserva.telefono}\nEstado: ${reserva.estado}\nPrecio: ${reserva.precio}\nDestino: ${reserva.destino}\nFecha: ${reserva.fecha}\nPersonas: ${reserva.numPersonas}\nSubtotal: ${subtotal}`;
+                const mensaje = `Detalles del Ticket:\nNombre: ${reserva.nombre}\nTeléfono: ${reserva.telefono}\nEstado: ${reserva.estado}\nPrecio: ${reserva.precio}\nDestino: ${reserva.destino}\nFecha: ${fechaFormateada}\nPersonas: ${reserva.numPersonas}\nSubtotal: ${subtotal}`;
                 
                 const div = document.createElement('div');
                 div.className = 'reserva-item';
@@ -275,7 +281,7 @@
                     <p>Estado: ${reserva.estado}</p>
                     <p>Precio: ${reserva.precio} por persona</p>
                     <p>Destino: ${reserva.destino}</p>
-                    <p>Fecha: ${reserva.fecha}</p>
+                    <p>Fecha: ${fechaFormateada}</p>
                     <p>Personas: ${reserva.numPersonas}</p>
                     <p><strong>Subtotal: ${subtotal}</strong></p>
                     <div class="actions">
@@ -301,7 +307,7 @@
             const fecha = document.getElementById('fecha').value;
             const numPersonas = parseInt(document.getElementById('numPersonas').value);
 
-            const reserva = { nombre, telefono, estado, precio, destino, fecha, numPersonas };
+            const reserva = { nombre, telefono, estado, precio, destino, fecha };
             reservas.push(reserva);
             localStorage.setItem('reservas', JSON.stringify(reservas));
             actualizarReservasList();
@@ -345,7 +351,8 @@
 
         function verTicket(index) {
             const reserva = reservas[index];
-            const mensaje = `Detalles del Ticket:\nNombre: ${reserva.nombre}\nTeléfono: ${reserva.telefono}\nEstado: ${reserva.estado}\nPrecio: ${reserva.precio}\nDestino: ${reserva.destino}\nFecha: ${reserva.fecha}\nPersonas: ${reserva.numPersonas}\nSubtotal: ${reserva.precio * reserva.numPersonas}`;
+            const fechaFormateada = formatearFecha(reserva.fecha);
+            const mensaje = `Detalles del Ticket:\nNombre: ${reserva.nombre}\nTeléfono: ${reserva.telefono}\nEstado: ${reserva.estado}\nPrecio: ${reserva.precio}\nDestino: ${reserva.destino}\nFecha: ${fechaFormateada}\nPersonas: ${reserva.numPersonas}\nSubtotal: ${reserva.precio * reserva.numPersonas}`;
             alert(mensaje);
         }
 
@@ -427,6 +434,7 @@
             
             reservas.forEach(reserva => {
                 const subtotal = reserva.precio * reserva.numPersonas;
+                const fechaFormateada = formatearFecha(reserva.fecha);
                 printContent += `
                     <tr>
                         <td>${reserva.nombre}</td>
@@ -434,7 +442,7 @@
                         <td>${reserva.estado}</td>
                         <td>${reserva.precio}</td>
                         <td>${reserva.destino}</td>
-                        <td>${reserva.fecha}</td>
+                        <td>${fechaFormateada}</td>
                         <td>${reserva.numPersonas}</td>
                         <td>${subtotal}</td>
                     </tr>
