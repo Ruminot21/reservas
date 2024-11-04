@@ -277,7 +277,7 @@
                         <button onclick="verTicket(${index})">Ver Ticket</button>
                         <button onclick="editarReserva(${index})">Editar</button>
                         <button onclick="confirmarEliminarReserva(${index})">Eliminar</button>
-                        <button onclick="enviarPorWhatsapp('${encodeURIComponent(mensaje)}')">Enviar por WhatsApp</button>
+                        <button onclick="enviarPorWhatsapp('${encodeURIComponent(mensaje)}', '${reserva.telefono}')">Enviar por WhatsApp</button>
                     </div>
                 `;
                 reservasList.appendChild(div);
@@ -341,8 +341,8 @@
             alert(mensaje);
         }
 
-        function enviarPorWhatsapp(mensaje) {
-            const urlWhatsapp = `https://wa.me/?text=${mensaje}`;
+        function enviarPorWhatsapp(mensaje, numeroTelefono) {
+            const urlWhatsapp = `https://wa.me/${numeroTelefono}?text=${mensaje}`;
             window.open(urlWhatsapp, '_blank');
         }
 
