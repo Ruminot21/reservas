@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -115,7 +116,7 @@
             font-size: 20px;
             color: #aaaaaa;
         }
-        #printButton {
+        #printButton, #downloadButton {
             margin-top: 20px;
             padding: 10px 15px;
             background-color: #4CAF50;
@@ -128,7 +129,7 @@
             margin-left: auto;
             margin-right: auto;
         }
-        #printButton:hover {
+        #printButton:hover, #downloadButton:hover {
             background-color: #45a049;
         }
         table {
@@ -157,6 +158,7 @@
     <div class="tabs">
         <div class="tab active" data-target="tab1">Agregar Reserva</div>
         <div class="tab" data-target="tab2">Ver Reservas</div>
+        <div class="tab" data-target="tab3">Lista Ordenada</div>
     </div>
 
     <div class="content active" id="tab1">
@@ -202,6 +204,24 @@
             <!-- Aquí se mostrarán las reservas -->
         </div>
         <button id="printButton" onclick="imprimirReservas()">Imprimir Reservas</button>
+    </div>
+
+    <div class="content" id="tab3">
+        <table id="reservasTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Estado</th>
+                    <th>Seleccionar</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Las reservas se insertarán aquí -->
+            </tbody>
+        </table>
+        <button id="downloadButton" onclick="descargarLista()">Descargar Lista</button>
     </div>
 
     <div id="modal">
@@ -296,6 +316,51 @@
 
             // Actualizar el elemento del total de personas
             document.getElementById('totalPersonas').textContent = `Total de Personas: ${totalPersonas}`;
+
+            actualizarReservasTable();
+        }
+
+        function actualizarReservasTable() {
+            const reservasTableBody = document.getElementById('reservasTable').getElementsByTagName('tbody')[0];
+            reservasTableBody.innerHTML = '';
+
+            reservas.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+            reservas.forEach((reserva, index) => {
+                const row = reservasTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${reserva.nombre}</td>
+                    <td>${reserva.telefono}</td>
+                    <td>
+                        <select onchange="cambiarEstado(${index}, this.value)">
+                            <option value="pagado" ${reserva.estado === 'pagado' ? 'selected' : ''}>Pagado</option>
+                            <option value="reservado" ${reserva.estado === 'reservado' ? 'selected' : ''}>Reservado</option>
+                        </select>
+                    </td>
+                    <td><input type="checkbox"></td>
+                `;
+            });
+        }
+
+        function cambiarEstado(index, nuevoEstado) {
+            reservas[index].estado = nuevoEstado;
+            localStorage.setItem('reservas', JSON.stringify(reservas));
+            alert('Estado de pago actualizado!');
+        }
+
+        function descargarLista() {
+            const csvContent = "data:text/csv;charset=utf-8," + reservas.map((reserva, index) => 
+                `${index + 1},${reserva.nombre},${reserva.telefono},${reserva.estado}`
+            ).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "reservas.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function agregarReserva() {
@@ -430,7 +495,7 @@
                         </tr>
                     </thead>
                     <tbody>
-            `;
+      `;
             
             reservas.forEach(reserva => {
                 const subtotal = reserva.precio * reserva.numPersonas;
@@ -445,6 +510,7 @@
                         <td>${fechaFormateada}</td>
                         <td>${reserva.numPersonas}</td>
                         <td>${subtotal}</td>
+                    </td>${subtotal}</td>
                     </tr>
                 `;
             });
