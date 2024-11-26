@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -327,9 +326,11 @@
         <button onclick="editarPrecio()">Editar Precio por Persona</button>
         <button onclick="editarDestino()">Editar Destino</button>
         <button onclick="cambiarContrasena()">Cambiar Contraseña</button>
+        <button onclick="restaurarSistema()">Restaurar Sistema</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
     <script>
         // Cargar información del localStorage
         let reservas = JSON.parse(localStorage.getItem('reservas')) || [];
@@ -517,8 +518,9 @@
                 const nuevoDestino = prompt("Ingrese el nuevo destino:");
                 if (nuevoDestino) {
                     document.getElementById('destino').value = nuevoDestino;
-              alert('Destino actualizado!');
-                }
+                    localStorage.setItem('destinoFijo', nuevoDestino);
+                    alert('Destino actualizado!');
+             }
             } else {
                 alert('Contraseña incorrecta');
             }
@@ -527,7 +529,7 @@
         function cambiarContrasena() {
             const passwordActual = prompt("Ingrese la contraseña actual:");
             if (passwordActual === contrasena) {
-            const nuevaContrasena = prompt("Ingrese la nueva contraseña:");
+                const nuevaContrasena = prompt("Ingrese la nueva contraseña:");
                 if (nuevaContrasena) {
                     contrasena = nuevaContrasena;
                     localStorage.setItem('contrasena', nuevaContrasena);
@@ -650,6 +652,26 @@
         function toggleFloatingMenu() {
             const menu = document.getElementById('floatingMenu');
             menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function restaurarSistema() {
+            const password = prompt("Ingrese la contraseña para restaurar el sistema:");
+            if (password === '12345') {
+                reservas = [];
+                localStorage.setItem('reservas', JSON.stringify(reservas));
+                localStorage.removeItem('precioPorPersona');
+                localStorage.removeItem('destinoFijo');
+                localStorage.removeItem('contrasena');
+                precioPorPersona = 100;
+                destinoFijo = 'Destino Fijo';
+                contrasena = '12345';
+                document.getElementById('precio').value = precioPorPersona;
+                document.getElementById('destino').value = destinoFijo;
+                actualizarReservasList();
+                alert('Sistema restaurado a los valores predeterminados.');
+            } else {
+                alert('Contraseña incorrecta');
+            }
         }
 
         window.onload = actualizarReservasList;
