@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -40,6 +41,8 @@
         .content {
             display: none;
             padding: 20px;
+            height: 400px; /* Altura fija para permitir el desplazamiento */
+            overflow-y: auto; /* Añadir desplazamiento vertical */
         }
         .content.active {
             display: block;
@@ -115,7 +118,7 @@
             font-size: 20px;
             color: #aaaaaa;
         }
-        #printButton, #downloadButton {
+        #printButton, #downloadButton, #downloadPdfButton {
             margin-top: 20px;
             padding: 10px 15px;
             background-color: #4CAF50;
@@ -128,7 +131,7 @@
             margin-left: auto;
             margin-right: auto;
         }
-        #printButton:hover, #downloadButton:hover {
+        #printButton:hover, #downloadButton:hover, #downloadPdfButton:hover {
             background-color: #45a049;
         }
         table {
@@ -143,6 +146,49 @@
             text-align: left;
         }
         th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        /* Estilos para el botón flotante */
+        .floating-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+        .floating-menu {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
+        }
+        .floating-menu button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background-color: #f7f8fc;
+            color: #333;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .floating-menu button:hover {
             background-color: #4CAF50;
             color: white;
         }
@@ -179,12 +225,10 @@
         <div class="form-group">
             <label for="precio">Precio por Persona</label>
             <input type="number" id="precio" readonly>
-            <button onclick="editarPrecio()">Editar</button>
         </div>
         <div class="form-group">
             <label for="destino">Destino</label>
             <input type="text" id="destino" readonly>
-            <button onclick="editarDestino()">Editar</button>
         </div>
         <div class="form-group">
             <label for="fecha">Fecha del Viaje</label>
@@ -206,6 +250,10 @@
     </div>
 
     <div class="content" id="tab3">
+        <div class="form-group">
+            <label for="buscar">Buscar Reservas:</label>
+            <input type="text" id="buscar" onkeyup="filtrarReservas()" placeholder="Buscar por nombre...">
+        </div>
         <table id="reservasTable">
             <thead>
                 <tr>
@@ -220,7 +268,8 @@
                 <!-- Las reservas se insertarán aquí -->
             </tbody>
         </table>
-        <button id="downloadButton" onclick="descargarLista()">Descargar Lista</button>
+        <button id="downloadButton" onclick="descargarLista()">Descargar Lista CSV</button>
+        <button id="downloadPdfButton" onclick="descargarPdf()">Descargar Lista PDF</button>
     </div>
 
     <div id="modal">
@@ -255,11 +304,21 @@
         </div>
     </div>
 
+    <!-- Botón flotante y menú -->
+    <button class="floating-btn" onclick="toggleFloatingMenu()">⚙️</button>
+    <div class="floating-menu" id="floatingMenu">
+        <button onclick="editarPrecio()">Editar Precio por Persona</button>
+        <button onclick="editarDestino()">Editar Destino</button>
+        <button onclick="cambiarContrasena()">Cambiar Contraseña</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         // Cargar información del localStorage
         let reservas = JSON.parse(localStorage.getItem('reservas')) || [];
         let precioPorPersona = localStorage.getItem('precioPorPersona') || 100;
         let destinoFijo = localStorage.getItem('destinoFijo') || 'Destino Fijo';
+        let contrasena = localStorage.getItem('contrasena') || '12345';
         let reservaIndex = null;
 
         document.getElementById('precio').value = precioPorPersona;
@@ -362,6 +421,40 @@
             document.body.removeChild(link);
         }
 
+        async function descargarPdf() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            let y = 10;
+
+            doc.text("Lista de Reservas", 10, y);
+            y += 10;
+
+            reservas.forEach((reserva, index) => {
+                const subtotal = reserva.precio * reserva.numPersonas;
+                const fechaFormateada = formatearFecha(reserva.fecha);
+                doc.text(`Reserva ${index + 1}`, 10, y);
+                y += 10;
+                doc.text(`Nombre: ${reserva.nombre}`, 10, y);
+                y += 10;
+                doc.text(`Teléfono: ${reserva.telefono}`, 10, y);
+                y += 10;
+                doc.text(`Estado: ${reserva.estado}`, 10, y);
+                y += 10;
+                doc.text(`Precio: ${reserva.precio}`, 10, y);
+                y += 10;
+                doc.text(`Destino: ${reserva.destino}`, 10, y);
+                y += 10;
+                doc.text(`Fecha: ${fechaFormateada}`, 10, y);
+                y += 10;
+                doc.text(`Personas: ${reserva.numPersonas}`, 10, y);
+                y += 10;
+                doc.text(`Subtotal: ${subtotal}`, 10, y);
+                y += 20;
+            });
+
+            doc.save('reservas.pdf');
+        }
+
         function agregarReserva() {
             const nombre = document.getElementById('nombre').value;
             const telefono = document.getElementById('telefono').value;
@@ -387,7 +480,7 @@
 
         function editarPrecio() {
             const password = prompt("Ingrese la contraseña para editar el precio:");
-            if (password === "12345") {
+            if (password === contrasena) {
                 const nuevoPrecio = prompt("Ingrese el nuevo precio:");
                 if (nuevoPrecio) {
                     document.getElementById('precio').value = nuevoPrecio;
@@ -401,12 +494,26 @@
 
         function editarDestino() {
             const password = prompt("Ingrese la contraseña para editar el destino:");
-            if (password === "12345") {
+            if (password === contrasena) {
                 const nuevoDestino = prompt("Ingrese el nuevo destino:");
                 if (nuevoDestino) {
                     document.getElementById('destino').value = nuevoDestino;
                     localStorage.setItem('destinoFijo', nuevoDestino);
                     alert('Destino actualizado!');
+                }
+            } else {
+                alert('Contraseña incorrecta');
+            }
+        }
+
+        function cambiarContrasena() {
+            const passwordActual = prompt("Ingrese la contraseña actual:");
+            if (passwordActual === contrasena) {
+           const nuevaContrasena = prompt("Ingrese la nueva contraseña:");
+                if (nuevaContrasena) {
+                    contrasena = nuevaContrasena;
+                    localStorage.setItem('contrasena', nuevaContrasena);
+                    alert('Contraseña actualizada!');
                 }
             } else {
                 alert('Contraseña incorrecta');
@@ -509,7 +616,6 @@
                         <td>${fechaFormateada}</td>
                         <td>${reserva.numPersonas}</td>
                         <td>${subtotal}</td>
-                    </td>${subtotal}</td>
                     </tr>
                 `;
             });
@@ -523,6 +629,21 @@
             printWindow.document.write(`<html><head><title>Imprimir Reservas</title></head><body>${printContent}</body></html>`);
             printWindow.document.close();
             printWindow.print();
+        }
+
+        function filtrarReservas() {
+            const filtro = document.getElementById('buscar').value.toLowerCase();
+            const filas = document.getElementById('reservasTable').getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            
+            for (let i = 0; i < filas.length; i++) {
+                const nombre = filas[i].getElementsByTagName("td")[1].textContent.toLowerCase();
+                filas[i].style.display = nombre.includes(filtro) ? "" : "none";
+            }
+        }
+
+        function toggleFloatingMenu() {
+            const menu = document.getElementById('floatingMenu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
         }
 
         window.onload = actualizarReservasList;
