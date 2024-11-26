@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -40,8 +41,8 @@
         .content {
             display: none;
             padding: 20px;
-            height: 400px; /* Altura fija para permitir el desplazamiento */
-            overflow-y: auto; /* Añadir desplazamiento vertical */
+            height: 400px;
+            overflow-y: auto;
         }
         .content.active {
             display: block;
@@ -131,10 +132,10 @@
             margin-right: auto;
         }
         #downloadPdfButton {
-            background-color: #217346; /* Color típico de Excel */
+            background-color: #217346;
         }
         #downloadPdfButton:hover {
-            background-color: #1e5f39; /* Un verde más oscuro para el hover */
+            background-color: #1e5f39;
         }
         #printButton:hover, #downloadButton:hover {
             background-color: #45a049;
@@ -203,6 +204,8 @@
     <header>
         <h1>Sistema de Reservas</h1>
         <div id="totalPersonas" style="font-size: 1.2em; margin-top: 10px;">Total de Personas: 0</div>
+        <div id="totalPagadas" style="font-size: 1.2em; margin-top: 5px;">Total de Reservas Pagadas: 0</div>
+        <div id="totalMonto" style="font-size: 1.2em; margin-top: 5px;">Total Monto Pagado: $0</div>
     </header>
 
     <div class="tabs">
@@ -269,7 +272,7 @@
                     <th>#</th>
                     <th>Nombre</th>
                     <th>Teléfono</th>
-                    <th>RUT</th> <!-- Nueva columna de RUT -->
+                    <th>RUT</th>
                     <th>Estado</th>
                     <th>Seleccionar</th>
                 </tr>
@@ -357,10 +360,16 @@
             const reservasList = document.getElementById('reservasList');
             reservasList.innerHTML = '';
             let totalPersonas = 0;
+            let totalPagadas = 0;
+            let totalMonto = 0;
 
             reservas.forEach((reserva, index) => {
                 const subtotal = reserva.precio * reserva.numPersonas;
-                totalPersonas += reserva.numPersonas; // Sumar el número de personas
+                totalPersonas += reserva.numPersonas;
+                if (reserva.estado === 'pagado') {
+                    totalPagadas++;
+                    totalMonto += subtotal;
+                }
                 const fechaFormateada = formatearFecha(reserva.fecha);
 
                 const mensaje = `Detalles del Ticket:\nNombre: ${reserva.nombre}\nTeléfono: ${reserva.telefono}\nRUT: ${reserva.rut}\nEstado: ${reserva.estado}\nPrecio: ${reserva.precio}\nDestino: ${reserva.destino}\nFecha: ${fechaFormateada}\nPersonas: ${reserva.numPersonas}\nSubtotal: ${subtotal}`;
@@ -387,8 +396,10 @@
                 reservasList.appendChild(div);
             });
 
-            // Actualizar el elemento del total de personas
+            // Actualizar el elemento del total de personas, reservas pagadas y monto total pagado
             document.getElementById('totalPersonas').textContent = `Total de Personas: ${totalPersonas}`;
+            document.getElementById('totalPagadas').textContent = `Total de Reservas Pagadas: ${totalPagadas}`;
+            document.getElementById('totalMonto').textContent = `Total Monto Pagado: $${totalMonto}`;
 
             actualizarReservasTable();
         }
@@ -405,7 +416,7 @@
                     <td>${index + 1}</td>
                     <td>${reserva.nombre}</td>
                     <td>${reserva.telefono}</td>
-                    <td>${reserva.rut}</td> <!-- Mostrar el RUT -->
+                    <td>${reserva.rut}</td>
                     <td>
                         <select onchange="cambiarEstado(${index}, this.value)">
                             <option value="pagado" ${reserva.estado === 'pagado' ? 'selected' : ''}>Pagado</option>
@@ -420,6 +431,7 @@
         function cambiarEstado(index, nuevoEstado) {
             reservas[index].estado = nuevoEstado;
             localStorage.setItem('reservas', JSON.stringify(reservas));
+            actualizarReservasList();
             alert('Estado de pago actualizado!');
         }
 
@@ -445,29 +457,16 @@
             doc.text("Lista de Reservas", 10, y);
             y += 10;
 
-            reservas.forEach((reserva, index) => {
-                const subtotal = reserva.precio * reserva.numPersonas;
-                const fechaFormateada = formatearFecha(reserva.fecha);
-                doc.text(`Reserva ${index + 1}`, 10, y);
-                y += 10;
-                doc.text(`Nombre: ${reserva.nombre}`, 10, y);
-                y += 10;
-                doc.text(`Teléfono: ${reserva.telefono}`, 10, y);
-                y += 10;
-                doc.text(`RUT: ${reserva.rut}`, 10, y);
-                y += 10;
-                doc.text(`Estado: ${reserva.estado}`, 10, y);
-                y += 10;
-                doc.text(`Precio: ${reserva.precio}`, 10, y);
-                y += 10;
-                doc.text(`Destino: ${reserva.destino}`, 10, y);
-                y += 10;
-                doc.text(`Fecha: ${fechaFormateada}`, 10, y);
-                y += 10;
-                doc.text(`Personas: ${reserva.numPersonas}`, 10, y);
-                y += 10;
-                doc.text(`Subtotal: ${subtotal}`, 10, y);
-                y += 20;
+            doc.autoTable({
+                head: [['#', 'Nombre', 'Teléfono', 'RUT', 'Estado']],
+                body: reservas.map((reserva, index) => [
+                    index + 1,
+                    reserva.nombre,
+                    reserva.telefono,
+                    reserva.rut,
+                    reserva.estado
+                ]),
+                startY: y
             });
 
             doc.save('reservas.pdf');
@@ -495,7 +494,7 @@
             document.getElementById('rut').value = '';
             document.getElementById('estado').value = 'pagado';
             document.getElementById('fecha').value = '';
-            document.getElementById('numPersonas').value = '1'; // Restablece a 1
+            document.getElementById('numPersonas').value = '1';
         }
 
         function editarPrecio() {
@@ -518,8 +517,7 @@
                 const nuevoDestino = prompt("Ingrese el nuevo destino:");
                 if (nuevoDestino) {
                     document.getElementById('destino').value = nuevoDestino;
-                    localStorage.setItem('destinoFijo', nuevoDestino);
-                    alert('Destino actualizado!');
+              alert('Destino actualizado!');
                 }
             } else {
                 alert('Contraseña incorrecta');
@@ -529,7 +527,7 @@
         function cambiarContrasena() {
             const passwordActual = prompt("Ingrese la contraseña actual:");
             if (passwordActual === contrasena) {
-                const nuevaContrasena = prompt("Ingrese la nueva contraseña:");
+            const nuevaContrasena = prompt("Ingrese la nueva contraseña:");
                 if (nuevaContrasena) {
                     contrasena = nuevaContrasena;
                     localStorage.setItem('contrasena', nuevaContrasena);
@@ -545,6 +543,51 @@
             const fechaFormateada = formatearFecha(reserva.fecha);
             const mensaje = `Detalles del Ticket:\nNombre: ${reserva.nombre}\nTeléfono: ${reserva.telefono}\nRUT: ${reserva.rut}\nEstado: ${reserva.estado}\nPrecio: ${reserva.precio}\nDestino: ${reserva.destino}\nFecha: ${fechaFormateada}\nPersonas: ${reserva.numPersonas}\nSubtotal: ${reserva.precio * reserva.numPersonas}`;
             alert(mensaje);
+        }
+
+        function editarReserva(index) {
+            reservaIndex = index;
+            const reserva = reservas[index];
+            document.getElementById('editNombre').value = reserva.nombre;
+            document.getElementById('editTelefono').value = reserva.telefono;
+            document.getElementById('editRut').value = reserva.rut;
+            document.getElementById('editEstado').value = reserva.estado;
+            document.getElementById('editFecha').value = reserva.fecha;
+            document.getElementById('editNumPersonas').value = reserva.numPersonas;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function guardarCambios() {
+            const reserva = reservas[reservaIndex];
+            reserva.nombre = document.getElementById('editNombre').value;
+            reserva.telefono = document.getElementById('editTelefono').value;
+            reserva.rut = document.getElementById('editRut').value;
+            reserva.estado = document.getElementById('editEstado').value;
+            reserva.fecha = document.getElementById('editFecha').value;
+            reserva.numPersonas = parseInt(document.getElementById('editNumPersonas').value);
+
+            localStorage.setItem('reservas', JSON.stringify(reservas));
+            actualizarReservasList();
+            cerrarModal();
+            alert('Reserva actualizada!');
+        }
+
+        function confirmarEliminarReserva(index) {
+            if (confirm('¿Está seguro de que desea eliminar esta reserva?')) {
+                reservas.splice(index, 1);
+                localStorage.setItem('reservas', JSON.stringify(reservas));
+                actualizarReservasList();
+                alert('Reserva eliminada!');
+            }
+        }
+
+        function enviarPorWhatsapp(mensaje, telefono) {
+            const url = `https://wa.me/${telefono}?text=${mensaje}`;
+            window.open(url, '_blank');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal').style.display = 'none';
         }
 
         function imprimirReservas() {
