@@ -130,7 +130,13 @@
             margin-left: auto;
             margin-right: auto;
         }
-        #printButton:hover, #downloadButton:hover, #downloadPdfButton:hover {
+        #downloadPdfButton {
+            background-color: #217346; /* Color típico de Excel */
+        }
+        #downloadPdfButton:hover {
+            background-color: #1e5f39; /* Un verde más oscuro para el hover */
+        }
+        #printButton:hover, #downloadButton:hover {
             background-color: #45a049;
         }
         table {
@@ -215,6 +221,10 @@
             <input type="tel" id="telefono" required>
         </div>
         <div class="form-group">
+            <label for="rut">Número de RUT</label>
+            <input type="text" id="rut" required>
+        </div>
+        <div class="form-group">
             <label for="estado">Estado de Pago</label>
             <select id="estado">
                 <option value="pagado">Pagado</option>
@@ -259,6 +269,7 @@
                     <th>#</th>
                     <th>Nombre</th>
                     <th>Teléfono</th>
+                    <th>RUT</th> <!-- Nueva columna de RUT -->
                     <th>Estado</th>
                     <th>Seleccionar</th>
                 </tr>
@@ -282,6 +293,10 @@
             <div class="form-group">
                 <label for="editTelefono">Teléfono</label>
                 <input type="tel" id="editTelefono">
+            </div>
+            <div class="form-group">
+                <label for="editRut">Número de RUT</label>
+                <input type="text" id="editRut">
             </div>
             <div class="form-group">
                 <label for="editEstado">Estado de Pago</label>
@@ -348,13 +363,14 @@
                 totalPersonas += reserva.numPersonas; // Sumar el número de personas
                 const fechaFormateada = formatearFecha(reserva.fecha);
 
-                const mensaje = `Detalles del Ticket:\nNombre: ${reserva.nombre}\nTeléfono: ${reserva.telefono}\nEstado: ${reserva.estado}\nPrecio: ${reserva.precio}\nDestino: ${reserva.destino}\nFecha: ${fechaFormateada}\nPersonas: ${reserva.numPersonas}\nSubtotal: ${subtotal}`;
+                const mensaje = `Detalles del Ticket:\nNombre: ${reserva.nombre}\nTeléfono: ${reserva.telefono}\nRUT: ${reserva.rut}\nEstado: ${reserva.estado}\nPrecio: ${reserva.precio}\nDestino: ${reserva.destino}\nFecha: ${fechaFormateada}\nPersonas: ${reserva.numPersonas}\nSubtotal: ${subtotal}`;
                 
                 const div = document.createElement('div');
                 div.className = 'reserva-item';
                 div.innerHTML = `
                     <p>Nombre: ${reserva.nombre}</p>
                     <p>Teléfono: ${reserva.telefono}</p>
+                    <p>RUT: ${reserva.rut}</p>
                     <p>Estado: ${reserva.estado}</p>
                     <p>Precio: ${reserva.precio} por persona</p>
                     <p>Destino: ${reserva.destino}</p>
@@ -389,6 +405,7 @@
                     <td>${index + 1}</td>
                     <td>${reserva.nombre}</td>
                     <td>${reserva.telefono}</td>
+                    <td>${reserva.rut}</td> <!-- Mostrar el RUT -->
                     <td>
                         <select onchange="cambiarEstado(${index}, this.value)">
                             <option value="pagado" ${reserva.estado === 'pagado' ? 'selected' : ''}>Pagado</option>
@@ -408,7 +425,7 @@
 
         function descargarLista() {
             const csvContent = "data:text/csv;charset=utf-8," + reservas.map((reserva, index) => 
-                `${index + 1},${reserva.nombre},${reserva.telefono},${reserva.estado}`
+                `${index + 1},${reserva.nombre},${reserva.telefono},${reserva.rut},${reserva.estado}`
             ).join("\n");
 
             const encodedUri = encodeURI(csvContent);
@@ -437,6 +454,8 @@
                 y += 10;
                 doc.text(`Teléfono: ${reserva.telefono}`, 10, y);
                 y += 10;
+                doc.text(`RUT: ${reserva.rut}`, 10, y);
+                y += 10;
                 doc.text(`Estado: ${reserva.estado}`, 10, y);
                 y += 10;
                 doc.text(`Precio: ${reserva.precio}`, 10, y);
@@ -457,13 +476,14 @@
         function agregarReserva() {
             const nombre = document.getElementById('nombre').value;
             const telefono = document.getElementById('telefono').value;
+            const rut = document.getElementById('rut').value;
             const estado = document.getElementById('estado').value;
             const precio = parseFloat(document.getElementById('precio').value);
             const destino = document.getElementById('destino').value;
             const fecha = document.getElementById('fecha').value;
             const numPersonas = parseInt(document.getElementById('numPersonas').value);
 
-            const reserva = { nombre, telefono, estado, precio, destino, fecha, numPersonas };
+            const reserva = { nombre, telefono, rut, estado, precio, destino, fecha, numPersonas };
             reservas.push(reserva);
             localStorage.setItem('reservas', JSON.stringify(reservas));
             actualizarReservasList();
@@ -472,6 +492,7 @@
             // Limpiar campos después de agregar la reserva
             document.getElementById('nombre').value = '';
             document.getElementById('telefono').value = '';
+            document.getElementById('rut').value = '';
             document.getElementById('estado').value = 'pagado';
             document.getElementById('fecha').value = '';
             document.getElementById('numPersonas').value = '1'; // Restablece a 1
@@ -508,7 +529,7 @@
         function cambiarContrasena() {
             const passwordActual = prompt("Ingrese la contraseña actual:");
             if (passwordActual === contrasena) {
-           const nuevaContrasena = prompt("Ingrese la nueva contraseña:");
+                const nuevaContrasena = prompt("Ingrese la nueva contraseña:");
                 if (nuevaContrasena) {
                     contrasena = nuevaContrasena;
                     localStorage.setItem('contrasena', nuevaContrasena);
@@ -522,65 +543,8 @@
         function verTicket(index) {
             const reserva = reservas[index];
             const fechaFormateada = formatearFecha(reserva.fecha);
-            const mensaje = `Detalles del Ticket:\nNombre: ${reserva.nombre}\nTeléfono: ${reserva.telefono}\nEstado: ${reserva.estado}\nPrecio: ${reserva.precio}\nDestino: ${reserva.destino}\nFecha: ${fechaFormateada}\nPersonas: ${reserva.numPersonas}\nSubtotal: ${reserva.precio * reserva.numPersonas}`;
+            const mensaje = `Detalles del Ticket:\nNombre: ${reserva.nombre}\nTeléfono: ${reserva.telefono}\nRUT: ${reserva.rut}\nEstado: ${reserva.estado}\nPrecio: ${reserva.precio}\nDestino: ${reserva.destino}\nFecha: ${fechaFormateada}\nPersonas: ${reserva.numPersonas}\nSubtotal: ${reserva.precio * reserva.numPersonas}`;
             alert(mensaje);
-        }
-
-        function enviarPorWhatsapp(mensaje, numeroTelefono) {
-            const urlWhatsapp = `https://wa.me/${numeroTelefono}?text=${mensaje}`;
-            window.open(urlWhatsapp, '_blank');
-        }
-
-        function editarReserva(index) {
-            reservaIndex = index;
-            const reserva = reservas[index];
-            document.getElementById('editNombre').value = reserva.nombre;
-            document.getElementById('editTelefono').value = reserva.telefono;
-            document.getElementById('editEstado').value = reserva.estado;
-            document.getElementById('editFecha').value = reserva.fecha;
-            document.getElementById('editNumPersonas').value = reserva.numPersonas;
-            const modal = document.getElementById('modal');
-            modal.style.display = 'flex';
-        }
-
-        function cerrarModal() {
-            const modal = document.getElementById('modal');
-            modal.style.display = 'none';
-        }
-
-        function guardarCambios() {
-            const reserva = reservas[reservaIndex];
-            reserva.nombre = document.getElementById('editNombre').value;
-            reserva.telefono = document.getElementById('editTelefono').value;
-            reserva.estado = document.getElementById('editEstado').value;
-            reserva.fecha = document.getElementById('editFecha').value;
-            reserva.numPersonas = parseInt(document.getElementById('editNumPersonas').value);
-            localStorage.setItem('reservas', JSON.stringify(reservas));
-            actualizarReservasList();
-            alert('Cambios guardados!');
-            cerrarModal();
-        }
-
-        function confirmarEliminarReserva(index) {
-            if (confirm('¿Está seguro de que desea eliminar esta reserva?')) {
-                eliminarReserva(index);
-            }
-        }
-
-        function eliminarReserva(index) {
-            reservas.splice(index, 1);
-            localStorage.setItem('reservas', JSON.stringify(reservas));
-            actualizarReservasList();
-            alert('Reserva eliminada!');
-        }
-
-        function eliminarTodasReservas() {
-            if (confirm('¿Está seguro de que desea eliminar todas las reservas?')) {
-                reservas = [];
-                localStorage.setItem('reservas', JSON.stringify(reservas));
-                actualizarReservasList();
-                alert('Todas las reservas han sido eliminadas!');
-            }
         }
 
         function imprimirReservas() {
@@ -589,29 +553,29 @@
                 <table>
                     <thead>
                         <tr>
+                            <th>#</th>
                             <th>Nombre</th>
                             <th>Teléfono</th>
+                            <th>RUT</th>
                             <th>Estado</th>
-                            <th>Precio</th>
-                            <th>Destino</th>
                             <th>Fecha</th>
                             <th>Personas</th>
                             <th>Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
-      `;
-            
-            reservas.forEach(reserva => {
-                const subtotal = reserva.precio * reserva.numPersonas;
+            `;
+
+            reservas.forEach((reserva, index) => {
                 const fechaFormateada = formatearFecha(reserva.fecha);
+                const subtotal = reserva.precio * reserva.numPersonas;
                 printContent += `
                     <tr>
+                        <td>${index + 1}</td>
                         <td>${reserva.nombre}</td>
                         <td>${reserva.telefono}</td>
+                        <td>${reserva.rut}</td>
                         <td>${reserva.estado}</td>
-                        <td>${reserva.precio}</td>
-                        <td>${reserva.destino}</td>
                         <td>${fechaFormateada}</td>
                         <td>${reserva.numPersonas}</td>
                         <td>${subtotal}</td>
